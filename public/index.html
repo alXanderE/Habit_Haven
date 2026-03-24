@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Habit Haven</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Habit Haven</p>
+          <h1>Build habits that actually feel rewarding.</h1>
+          <p class="hero-copy">
+            Complete habits, earn coins, and customize your avatar and base as you build consistency.
+          </p>
+        </div>
+        <section class="profile-card" id="profileCard"></section>
+      </header>
+
+      <main class="layout">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Today</p>
+              <h2>Your habits</h2>
+            </div>
+          </div>
+
+          <form id="habitForm" class="habit-form">
+            <input id="title" name="title" placeholder="Habit title" maxlength="80" required />
+            <input id="description" name="description" placeholder="Description (optional)" maxlength="200" />
+            <select id="frequency" name="frequency">
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+            <input id="rewardCoins" name="rewardCoins" type="number" min="1" max="100" value="10" />
+            <input id="rewardXp" name="rewardXp" type="number" min="1" max="100" value="5" />
+            <button type="submit">Add habit</button>
+          </form>
+          <p id="statusMessage" class="status-message" aria-live="polite"></p>
+
+
+          <div id="habitList" class="habit-list"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Rewards</p>
+              <h2>Avatar and base</h2>
+            </div>
+          </div>
+
+          <div id="showcase" class="showcase"></div>
+          <div id="storeGrid" class="store-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <template id="habitTemplate">
+      <article class="habit-card">
+        <div>
+          <h3 class="habit-title"></h3>
+          <p class="habit-description"></p>
+        </div>
+        <div class="habit-meta"></div>
+        <div class="habit-actions"></div>
+      </article>
+    </template>
+
+    <template id="storeItemTemplate">
+      <article class="store-card">
+        <div class="store-preview"></div>
+        <h3 class="store-name"></h3>
+        <p class="store-cost"></p>
+        <button class="store-action"></button>
+      </article>
+    </template>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

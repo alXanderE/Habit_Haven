@@ -1,0 +1,21 @@
+{
+  "name": "habit-haven",
+  "version": "1.0.0",
+  "description": "Gamified habit tracker MVP with Express, MongoDB Atlas, and a simple web frontend.",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5",
+    "morgan": "^1.10.0"
+  }
+}
