@@ -250,4 +250,21 @@ loadApp().catch((error) => {
   document.body.innerHTML = `<pre style="padding: 20px;">${error.message}</pre>`;
 });
 
+document.getElementById("resetProgressButton").addEventListener("click", async () => {
+  const confirmed = window.confirm("Reset all habits, coins, XP, and equipped items?");
 
+  if (!confirmed) {
+    return;
+  }
+
+  try {
+    const payload = await api("/api/profile/reset", { method: "POST" });
+    state.user = payload.user;
+    state.habits = payload.habits;
+    state.completedHabitIds = payload.completedHabitIds;
+    setStatus("Progress reset.");
+    rerender();
+  } catch (error) {
+    setStatus(error.message, "error");
+  }
+});

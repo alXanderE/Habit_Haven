@@ -271,7 +271,7 @@ export function createApp({ demoUserEmail }) {
       await Habit.deleteMany({ userId: user._id });
       await Completion.deleteMany({ userId: user._id });
 
-      user.coins = 50;
+      user.coins = 0;
       user.xp = 0;
       user.level = 1;
       user.ownedItemIds = [];
@@ -280,7 +280,7 @@ export function createApp({ demoUserEmail }) {
       await user.save();
 
       res.json({
-        message: \"Progress reset.\",
+        message: "Progress reset.",
         user,
         habits: [],
         completedHabitIds: []
