@@ -5,6 +5,7 @@ import { ensureDemoUser } from "./services/demoUser.js";
 
 dotenv.config();
 
+const host = process.env.HOST || "0.0.0.0";
 const port = Number(process.env.PORT || 3000);
 const mongoUri = process.env.MONGODB_URI;
 const demoUserEmail = process.env.DEMO_USER_EMAIL || "demo@habithaven.app";
@@ -15,8 +16,8 @@ async function start() {
 
   const app = createApp({ demoUserEmail });
 
-  app.listen(port, () => {
-    console.log(`Habit Haven listening on http://localhost:${port}`);
+  app.listen(port, host, () => {
+    console.log(`Habit Haven listening on http://${host}:${port}`);
   });
 }
 
