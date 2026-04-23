@@ -84,6 +84,22 @@ export function createApp({ demoUserEmail }) {
     };
   }
 
+  async function buildBootstrapPayload(user) {
+    const habits = await Habit.find({ userId: user._id }).sort({ createdAt: -1 });
+    const today = getTodayDateString();
+    const completions = await Completion.find({
+      userId: user._id,
+      completedOn: today
+    }).select("habitId completedOn");
+
+    return {
+      user: sanitizeUser(user),
+      habits,
+      completedHabitIds: completions.map((entry) => entry.habitId.toString()),
+      storeItems: STORE_ITEMS
+    };
+  }
+
   async function getAuthenticatedUserFromRequest(req) {
     const cookies = parseCookies(req.headers.cookie);
     const sessionToken = cookies[getSessionCookieName()];
@@ -172,8 +188,10 @@ export function createApp({ demoUserEmail }) {
         })
       );
 
+      const payload = await buildBootstrapPayload(user);
+
       res.setHeader("Set-Cookie", serializeSessionCookie(sessionToken, getSessionMaxAgeSeconds()));
-      res.status(201).json({ message: "Account created.", user: sanitizeUser(user) });
+      res.status(201).json({ message: "Account created.", ...payload });
     } catch (error) {
       next(error);
     }
@@ -194,8 +212,10 @@ export function createApp({ demoUserEmail }) {
       user.sessionExpiresAt = session.sessionExpiresAt;
       await user.save();
 
+      const payload = await buildBootstrapPayload(user);
+
       res.setHeader("Set-Cookie", serializeSessionCookie(sessionToken, getSessionMaxAgeSeconds()));
-      res.json({ message: "Logged in.", user: sanitizeUser(user) });
+      res.json({ message: "Logged in.", ...payload });
     } catch (error) {
       next(error);
     }
@@ -217,22 +237,7 @@ export function createApp({ demoUserEmail }) {
 
   app.get("/api/bootstrap", requireAuth, async (req, res, next) => {
     try {
-      const user = req.currentUser;
-      const habits = await Habit.find({ userId: user._id }).sort({ createdAt: -1 });
-      const today = getTodayDateString();
-      const completions = await Completion.find({
-        userId: user._id,
-        completedOn: today
-      }).select("habitId completedOn");
-
-      const completedHabitIds = completions.map((entry) => entry.habitId.toString());
-
-      res.json({
-        user: sanitizeUser(user),
-        habits,
-        completedHabitIds,
-        storeItems: STORE_ITEMS
-      });
+      res.json(await buildBootstrapPayload(req.currentUser));
     } catch (error) {
       next(error);
     }

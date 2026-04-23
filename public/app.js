@@ -180,6 +180,15 @@ function handleUnauthorized(message = "Please log in to continue.") {
   showAuthRoute(false);
 }
 
+function applyBootstrapPayload(payload) {
+  state.user = payload.user;
+  state.habits = payload.habits || [];
+  state.completedHabitIds = payload.completedHabitIds || [];
+  state.storeItems = payload.storeItems || [];
+  showAppShell(false);
+  rerender();
+}
+
 function rerender() {
   renderProfile();
   renderHabits();
@@ -347,12 +356,7 @@ function renderStore() {
 
 async function loadApp() {
   const payload = await api("/api/bootstrap");
-  state.user = payload.user;
-  state.habits = payload.habits;
-  state.completedHabitIds = payload.completedHabitIds;
-  state.storeItems = payload.storeItems;
-  showAppShell(false);
-  rerender();
+  applyBootstrapPayload(payload);
 }
 
 async function loadSession() {
@@ -407,17 +411,17 @@ document.getElementById("habitForm").addEventListener("submit", async (event) =>
 document.getElementById("loginForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = event.currentTarget;
-  const payload = Object.fromEntries(new FormData(form).entries());
+  const credentials = Object.fromEntries(new FormData(form).entries());
 
   try {
     setAuthStatus("");
     setSignupStatus("");
-    await api("/api/auth/login", {
+    const payload = await api("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify(payload)
+      body: JSON.stringify(credentials)
     });
     form.reset();
-    await loadApp();
+    applyBootstrapPayload(payload);
   } catch (error) {
     setAuthStatus(error.message, "error");
   }
@@ -430,12 +434,12 @@ document.getElementById("signupForm").addEventListener("submit", async (event) =
 
   try {
     setSignupStatus("");
-    await api("/api/auth/signup", {
+    const response = await api("/api/auth/signup", {
       method: "POST",
       body: JSON.stringify(payload)
     });
     form.reset();
-    await loadApp();
+    applyBootstrapPayload(response);
   } catch (error) {
     setSignupStatus(error.message, "error");
   }
