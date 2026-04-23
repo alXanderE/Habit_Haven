@@ -40,6 +40,10 @@ body {
   box-shadow: var(--shadow);
 }
 
+.auth-shell > * {
+  grid-area: 1 / 1;
+}
+
 .auth-title {
   margin: 0;
   font-size: clamp(2rem, 5vw, 3.2rem);

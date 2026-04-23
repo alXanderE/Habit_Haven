@@ -13,6 +13,12 @@ const avatarLayers = [
   { name: "shirt", defaultPath: "/models/shirt_default.png", zIndex: 5 }
 ];
 
+const authRoutes = {
+  app: "/",
+  login: "/login",
+  signup: "/signup"
+};
+
 function setStatus(message = "", type = "info") {
   const statusNode = document.getElementById("statusMessage");
   if (!statusNode) return;
@@ -22,6 +28,13 @@ function setStatus(message = "", type = "info") {
 
 function setAuthStatus(message = "", type = "info") {
   const statusNode = document.getElementById("authStatusMessage");
+  if (!statusNode) return;
+  statusNode.textContent = message;
+  statusNode.classList.toggle("error", type === "error");
+}
+
+function setSignupStatus(message = "", type = "info") {
+  const statusNode = document.getElementById("signupStatusMessage");
   if (!statusNode) return;
   statusNode.textContent = message;
   statusNode.classList.toggle("error", type === "error");
@@ -119,19 +132,42 @@ function showAuthScreen() {
   document.getElementById("appShell").hidden = true;
 }
 
-function showAppShell() {
+function setLocation(path, method = "replaceState") {
+  if (window.location.pathname === path) {
+    return;
+  }
+
+  window.history[method](null, "", path);
+}
+
+function showAppShell(pushHistory = false) {
   document.getElementById("authShell").hidden = true;
   document.getElementById("appShell").hidden = false;
+
+  setLocation(authRoutes.app, pushHistory ? "pushState" : "replaceState");
 }
 
-function showLoginMode() {
-  document.getElementById("loginForm").hidden = false;
-  document.getElementById("signupForm").hidden = true;
+function showLoginMode(pushHistory = false) {
+  document.getElementById("loginView").hidden = false;
+  document.getElementById("signupView").hidden = true;
+  setLocation(authRoutes.login, pushHistory ? "pushState" : "replaceState");
 }
 
-function showSignupMode() {
-  document.getElementById("loginForm").hidden = true;
-  document.getElementById("signupForm").hidden = false;
+function showSignupMode(pushHistory = false) {
+  document.getElementById("loginView").hidden = true;
+  document.getElementById("signupView").hidden = false;
+  setLocation(authRoutes.signup, pushHistory ? "pushState" : "replaceState");
+}
+
+function showAuthRoute(pushHistory = false) {
+  showAuthScreen();
+
+  if (window.location.pathname === authRoutes.signup) {
+    showSignupMode(pushHistory);
+    return;
+  }
+
+  showLoginMode(pushHistory);
 }
 
 function handleUnauthorized(message = "Please log in to continue.") {
@@ -140,7 +176,8 @@ function handleUnauthorized(message = "Please log in to continue.") {
   state.completedHabitIds = [];
   state.storeItems = [];
   setAuthStatus(message, "error");
-  showAuthScreen();
+  setSignupStatus("");
+  showAuthRoute(false);
 }
 
 function rerender() {
@@ -314,7 +351,7 @@ async function loadApp() {
   state.habits = payload.habits;
   state.completedHabitIds = payload.completedHabitIds;
   state.storeItems = payload.storeItems;
-  showAppShell();
+  showAppShell(false);
   rerender();
 }
 
@@ -325,8 +362,7 @@ async function loadSession() {
     await loadApp();
   } catch (error) {
     if (error.status === 401) {
-      showAuthScreen();
-      showLoginMode();
+      showAuthRoute(false);
       return;
     }
 
@@ -339,7 +375,6 @@ async function logout() {
     await api("/api/auth/logout", { method: "POST" });
   } finally {
     handleUnauthorized();
-    showLoginMode();
   }
 }
 
@@ -375,6 +410,7 @@ document.getElementById("loginForm").addEventListener("submit", async (event) =>
 
   try {
     setAuthStatus("");
+    setSignupStatus("");
     await api("/api/auth/login", {
       method: "POST",
       body: JSON.stringify(payload)
@@ -391,7 +427,7 @@ document.getElementById("signupForm").addEventListener("submit", async (event) =
   const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
 
   try {
-    setAuthStatus("");
+    setSignupStatus("");
     await api("/api/auth/signup", {
       method: "POST",
       body: JSON.stringify(payload)
@@ -399,18 +435,26 @@ document.getElementById("signupForm").addEventListener("submit", async (event) =
     event.currentTarget.reset();
     await loadApp();
   } catch (error) {
-    setAuthStatus(error.message, "error");
+    setSignupStatus(error.message, "error");
   }
 });
 
 document.getElementById("showLoginButton").addEventListener("click", () => {
   setAuthStatus("");
-  showLoginMode();
+  setSignupStatus("");
+  showLoginMode(true);
 });
 
 document.getElementById("showSignupButton").addEventListener("click", () => {
   setAuthStatus("");
-  showSignupMode();
+  setSignupStatus("");
+  showSignupMode(true);
+});
+
+document.getElementById("backToLoginButton").addEventListener("click", () => {
+  setAuthStatus("");
+  setSignupStatus("");
+  showLoginMode(true);
 });
 
 document.getElementById("resetProgressButton").addEventListener("click", async () => {
@@ -431,6 +475,15 @@ document.getElementById("resetProgressButton").addEventListener("click", async (
     if (error.status === 401) return handleUnauthorized("Your session expired. Log in again.");
     setStatus(error.message, "error");
   }
+});
+
+window.addEventListener("popstate", () => {
+  if (state.user) {
+    showAppShell(false);
+    return;
+  }
+
+  showAuthRoute(false);
 });
 
 loadSession();

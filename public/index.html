@@ -8,11 +8,11 @@
   </head>
   <body>
     <section class="auth-shell" id="authShell">
-      <div class="auth-panel">
+      <div class="auth-panel" id="loginView">
         <p class="eyebrow">Habit Haven</p>
         <h1 class="auth-title">Log in to your habit world.</h1>
         <p class="auth-copy">
-          Create an account or sign in to track habits, earn rewards, and build your avatar.
+          Sign in to track habits, earn rewards, and build your avatar.
         </p>
         <div class="auth-toggle">
           <button id="showLoginButton" type="button">Log In</button>
@@ -25,13 +25,24 @@
           <input id="loginPassword" name="password" type="password" placeholder="Password" required />
           <button type="submit">Log In</button>
         </form>
+      </div>
 
-        <form id="signupForm" class="auth-form" hidden>
+      <div class="auth-panel" id="signupView" hidden>
+        <p class="eyebrow">Create Account</p>
+        <h1 class="auth-title">Start your habit world.</h1>
+        <p class="auth-copy">
+          Create a new account with your display name, email, and password.
+        </p>
+        <p id="signupStatusMessage" class="status-message" aria-live="polite"></p>
+
+        <form id="signupForm" class="auth-form">
           <input id="signupDisplayName" name="displayName" type="text" placeholder="Display name" required />
           <input id="signupEmail" name="email" type="email" placeholder="Email" required />
           <input id="signupPassword" name="password" type="password" placeholder="Password (6+ characters)" minlength="6" required />
           <button type="submit">Create Account</button>
         </form>
+
+        <button id="backToLoginButton" class="secondary" type="button">Back to Log In</button>
       </div>
     </section>
 
