@@ -39,12 +39,20 @@ function findStoreItem(itemId) {
 
 function renderProfile() {
   const profileCard = document.getElementById("profileCard");
+  const coinPanel = document.getElementById("coinPanel");
   const user = state.user;
 
   if (!user) {
     profileCard.innerHTML = "<p>Loading profile...</p>";
+    coinPanel.innerHTML = "<p>Loading coins...</p>";
     return;
   }
+
+  coinPanel.innerHTML = `
+    <p class="eyebrow">Coins</p>
+    <h2 class="coin-count">${user.coins}</h2>
+    <p class="coin-copy">Spend coins on avatar and base upgrades.</p>
+  `;
 
   profileCard.innerHTML = `
     <div>
@@ -55,7 +63,6 @@ function renderProfile() {
     <div class="stat-grid">
       <span class="chip">Level ${user.level}</span>
       <span class="chip">${user.xp} XP</span>
-      <span class="chip">${user.coins} coins</span>
       <span class="chip">${state.habits.length} habits</span>
     </div>
     <div class="message">Complete habits today to earn upgrades.</div>
