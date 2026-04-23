@@ -122,9 +122,7 @@ function renderProfile() {
     </div>
   `;
 
-  document.getElementById("logoutButton").addEventListener("click", async () => {
-    await logout();
-  });
+  document.getElementById("logoutButton").addEventListener("click", logout);
 }
 
 function showAuthScreen() {
@@ -465,6 +463,8 @@ document.getElementById("backToLoginButton").addEventListener("click", () => {
   setSignupStatus("");
   showLoginMode(true);
 });
+
+document.getElementById("heroLogoutButton").addEventListener("click", logout);
 
 document.getElementById("resetProgressButton").addEventListener("click", async () => {
   const confirmed = window.confirm("Reset all habits, coins, XP, and equipped items?");
