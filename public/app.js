@@ -145,18 +145,21 @@ function showAppShell(pushHistory = false) {
   document.getElementById("appShell").hidden = false;
 
   setLocation(authRoutes.app, pushHistory ? "pushState" : "replaceState");
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
 function showLoginMode(pushHistory = false) {
   document.getElementById("loginView").hidden = false;
   document.getElementById("signupView").hidden = true;
   setLocation(authRoutes.login, pushHistory ? "pushState" : "replaceState");
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
 function showSignupMode(pushHistory = false) {
   document.getElementById("loginView").hidden = true;
   document.getElementById("signupView").hidden = false;
   setLocation(authRoutes.signup, pushHistory ? "pushState" : "replaceState");
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
 function showAuthRoute(pushHistory = false) {
