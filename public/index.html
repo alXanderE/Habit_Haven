@@ -57,13 +57,13 @@
           <p class="hero-copy">
             Complete habits, earn coins, and customize your avatar and base as you build consistency.
           </p>
+          <section class="coin-panel" id="coinPanel"></section>
         </div>
         <div class="hero-side">
-          <section class="coin-panel" id="coinPanel"></section>
-        <div class="profile-stack">
-          <section class="profile-card" id="profileCard"></section>
-          <button id="resetProgressButton" class="secondary" type="button">Reset progress</button>
-        </div>
+          <div class="profile-stack">
+            <section class="profile-card" id="profileCard"></section>
+            <button id="resetProgressButton" class="secondary" type="button">Reset progress</button>
+          </div>
         </div>
       </header>
 
@@ -77,8 +77,15 @@
           </div>
 
           <form id="habitForm" class="habit-form">
-            <input id="title" name="title" placeholder="Habit title" maxlength="80" required />
-            <input id="description" name="description" placeholder="Description (optional)" maxlength="200" />
+            <input id="title" class="habit-title-input" name="title" placeholder="Habit title" maxlength="80" required />
+            <textarea
+              id="description"
+              class="habit-description-input"
+              name="description"
+              placeholder="Description (optional)"
+              maxlength="200"
+              rows="3"
+            ></textarea>
             <select id="frequency" name="frequency">
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>

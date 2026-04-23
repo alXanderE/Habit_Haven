@@ -147,6 +147,7 @@ body {
 }
 
 .coin-panel {
+  margin-top: 18px;
   padding: 24px;
   background:
     radial-gradient(circle at top left, rgba(251, 191, 36, 0.35), transparent 45%),
@@ -182,12 +183,29 @@ body {
 
 .habit-form {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr)) auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
   gap: 10px;
   margin-bottom: 18px;
 }
 
+.habit-title-input,
+.habit-description-input {
+  grid-column: 1 / -1;
+}
+
+.habit-title-input {
+  min-height: 56px;
+  font-size: 1.05rem;
+}
+
+.habit-description-input {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.45;
+}
+
 input,
+textarea,
 select,
 button {
   border-radius: 14px;
