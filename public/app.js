@@ -406,7 +406,8 @@ document.getElementById("habitForm").addEventListener("submit", async (event) =>
 
 document.getElementById("loginForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
+  const form = event.currentTarget;
+  const payload = Object.fromEntries(new FormData(form).entries());
 
   try {
     setAuthStatus("");
@@ -415,7 +416,7 @@ document.getElementById("loginForm").addEventListener("submit", async (event) =>
       method: "POST",
       body: JSON.stringify(payload)
     });
-    event.currentTarget.reset();
+    form.reset();
     await loadApp();
   } catch (error) {
     setAuthStatus(error.message, "error");
@@ -424,7 +425,8 @@ document.getElementById("loginForm").addEventListener("submit", async (event) =>
 
 document.getElementById("signupForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
+  const form = event.currentTarget;
+  const payload = Object.fromEntries(new FormData(form).entries());
 
   try {
     setSignupStatus("");
@@ -432,7 +434,7 @@ document.getElementById("signupForm").addEventListener("submit", async (event) =
       method: "POST",
       body: JSON.stringify(payload)
     });
-    event.currentTarget.reset();
+    form.reset();
     await loadApp();
   } catch (error) {
     setSignupStatus(error.message, "error");
