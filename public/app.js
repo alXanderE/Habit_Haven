@@ -5,6 +5,14 @@ const state = {
   storeItems: []
 };
 
+const avatarLayers = [
+  { name: "body", defaultPath: "/models/body_default.png", zIndex: 1 },
+  { name: "face", defaultPath: "/models/face_default.png", zIndex: 2 },
+  { name: "legs", defaultPath: "/models/legs_default.png", zIndex: 3 },
+  { name: "arms", defaultPath: "/models/arms_default.png", zIndex: 4 },
+  { name: "shirt", defaultPath: "/models/shirt_default.png", zIndex: 5 }
+];
+
 function setStatus(message = "", type = "info") {
   const statusNode = document.getElementById("statusMessage");
   if (!statusNode) return;
@@ -35,6 +43,27 @@ async function api(path, options = {}) {
 
 function findStoreItem(itemId) {
   return state.storeItems.find((item) => item.id === itemId);
+}
+
+function getEquippedAvatarItem(slot) {
+  const equippedMap = state.user?.equippedAvatarItemIds || {};
+  const itemId =
+    equippedMap[slot] ||
+    (slot === "accessory" ? state.user?.equippedAvatarItemId : null);
+
+  return itemId ? findStoreItem(itemId) : null;
+}
+
+function renderAvatarAccessory(item) {
+  if (!item) {
+    return "";
+  }
+
+  if (item.imagePath) {
+    return `<img class="avatar-layer avatar-accessory" src="${item.imagePath}" alt="" style="z-index: 6" />`;
+  }
+
+  return `<div class="avatar-item" style="background: ${item.style}; z-index: 6"></div>`;
 }
 
 function renderProfile() {
@@ -139,13 +168,24 @@ function renderHabits() {
 
 function renderShowcase() {
   const showcase = document.getElementById("showcase");
-  const avatarItem = findStoreItem(state.user?.equippedAvatarItemId);
+  const accessoryItem = getEquippedAvatarItem("accessory");
   const baseItem = findStoreItem(state.user?.equippedBaseItemId);
+  const avatarMarkup = avatarLayers
+    .map(
+      (layer) => {
+        const equippedItem = getEquippedAvatarItem(layer.name);
+        const imagePath = equippedItem?.imagePath || layer.defaultPath;
+
+        return `<img class="avatar-layer avatar-layer-${layer.name}" src="${imagePath}" alt="" style="z-index: ${layer.zIndex}" />`;
+      }
+    )
+    .join("");
 
   showcase.innerHTML = `
     <div class="base" style="background: ${baseItem?.style || "linear-gradient(160deg, #fffbeb, #ecfccb)"}"></div>
     <div class="avatar">
-      ${avatarItem ? `<div class="avatar-item" style="background: ${avatarItem.style}"></div>` : ""}
+      ${avatarMarkup}
+      ${renderAvatarAccessory(accessoryItem)}
     </div>
   `;
 }
@@ -159,10 +199,11 @@ function renderStore() {
     const node = template.content.cloneNode(true);
     const owned = state.user.ownedItemIds.includes(item.id);
     const equipped =
-      state.user.equippedAvatarItemId === item.id || state.user.equippedBaseItemId === item.id;
+      (item.type === "avatar" && getEquippedAvatarItem(item.slot || "accessory")?.id === item.id) ||
+      (item.type === "base" && state.user.equippedBaseItemId === item.id);
 
     node.querySelector(".store-preview").style.background = item.style;
-    node.querySelector(".store-name").textContent = `${item.name} (${item.type})`;
+    node.querySelector(".store-name").textContent = `${item.name} (${item.slot || item.type})`;
     node.querySelector(".store-cost").textContent = `${item.cost} coins`;
 
     const button = node.querySelector(".store-action");
@@ -204,7 +245,7 @@ function renderStore() {
         try { 
           const payload = await api("/api/store/unequip", { 
             method: "POST", 
-            body: JSON.stringify({ itemType: item.type }) 
+            body: JSON.stringify({ itemType: item.type, slot: item.slot }) 
           }); 
           state.user = payload.user; 
           setStatus(`Unequipped "${item.name}".`); 

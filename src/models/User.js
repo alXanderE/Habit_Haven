@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema(
       type: [String],
       default: []
     },
+    equippedAvatarItemIds: {
+      type: Map,
+      of: String,
+      default: {}
+    },
     equippedAvatarItemId: {
       type: String,
       default: null

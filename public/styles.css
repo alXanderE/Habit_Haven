@@ -225,11 +225,22 @@ button:disabled {
 
 .avatar {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 140px;
   margin: 32px auto 0;
-  background: linear-gradient(180deg, #fcd34d, #f59e0b);
-  border: 4px solid rgba(255, 255, 255, 0.85);
+}
+
+.avatar-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: auto;
+}
+
+.avatar-accessory {
+  z-index: 6;
 }
 
 .avatar-item {

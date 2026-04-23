@@ -5,12 +5,13 @@ import { fileURLToPath } from "url";
 import { Habit } from "./models/Habit.js";
 import { Completion } from "./models/Completion.js";
 import { User } from "./models/User.js";
-import { STORE_ITEMS, getItemById } from "./config/items.js";
+import { STORE_ITEMS, getAvatarItemSlots, getItemById } from "./config/items.js";
 import { calculateLevel, getTodayDateString, getYesterdayDateString } from "./utils/progress.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, "..", "public");
+const modelDir = path.join(__dirname, "models");
 
 export function createApp({ demoUserEmail }) {
   const app = express();
@@ -18,9 +19,41 @@ export function createApp({ demoUserEmail }) {
   app.use(morgan("dev"));
   app.use(express.json());
   app.use(express.static(publicDir));
+  app.use("/models", express.static(modelDir));
+
+  function normalizeAvatarEquipment(user) {
+    if (!user) {
+      return user;
+    }
+
+    if (!user.equippedAvatarItemIds) {
+      user.equippedAvatarItemIds = {};
+    }
+
+    if (user.equippedAvatarItemId && !user.equippedAvatarItemIds.get?.("accessory")) {
+      if (typeof user.equippedAvatarItemIds.set === "function") {
+        user.equippedAvatarItemIds.set("accessory", user.equippedAvatarItemId);
+      } else {
+        user.equippedAvatarItemIds.accessory = user.equippedAvatarItemId;
+      }
+    }
+
+    return user;
+  }
+
+  function setAvatarSlot(user, slot, itemId) {
+    if (typeof user.equippedAvatarItemIds?.set === "function") {
+      user.equippedAvatarItemIds.set(slot, itemId);
+    } else {
+      user.equippedAvatarItemIds = {
+        ...(user.equippedAvatarItemIds || {}),
+        [slot]: itemId
+      };
+    }
+  }
 
   async function getDemoUser() {
-    const user = await User.findOne({ email: demoUserEmail });
+    const user = normalizeAvatarEquipment(await User.findOne({ email: demoUserEmail }));
 
     if (!user) {
       throw new Error("Demo user not found. Start the server after database initialization.");
@@ -231,7 +264,10 @@ export function createApp({ demoUserEmail }) {
       }
 
       if (item.type === "avatar") {
-        user.equippedAvatarItemId = itemId;
+        setAvatarSlot(user, item.slot || "accessory", itemId);
+        if ((item.slot || "accessory") === "accessory") {
+          user.equippedAvatarItemId = itemId;
+        }
       } else {
         user.equippedBaseItemId = itemId;
       }
@@ -246,16 +282,24 @@ export function createApp({ demoUserEmail }) {
   app.post("/api/store/unequip", async (req, res, next) => { 
       try { 
         const user = await getDemoUser(); 
-        const { itemType } = req.body; 
+        const { itemType, slot } = req.body; 
  
-        if (!["avatar", "base"].includes(itemType)) { 
+        if (itemType === "avatar") {
+          const targetSlot = slot || "accessory";
+
+          if (!getAvatarItemSlots().includes(targetSlot)) {
+            return res.status(400).json({ message: "A valid avatar slot is required." });
+          }
+
+          setAvatarSlot(user, targetSlot, null);
+
+          if (targetSlot === "accessory") {
+            user.equippedAvatarItemId = null;
+          }
+        } else if (itemType === "base") {
+          user.equippedBaseItemId = null;
+        } else {
           return res.status(400).json({ message: "A valid item type is required." }); 
-        } 
- 
-        if (itemType === "avatar") { 
-          user.equippedAvatarItemId = null; 
-        } else { 
-          user.equippedBaseItemId = null; 
         } 
  
         await user.save(); 
@@ -275,6 +319,7 @@ export function createApp({ demoUserEmail }) {
       user.xp = 0;
       user.level = 1;
       user.ownedItemIds = [];
+      user.equippedAvatarItemIds = {};
       user.equippedAvatarItemId = null;
       user.equippedBaseItemId = null;
       await user.save();
