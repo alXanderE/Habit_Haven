@@ -14,6 +14,10 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true
     },
+    passwordHash: {
+      type: String,
+      required: true
+    },
     coins: {
       type: Number,
       default: 0
@@ -41,6 +45,15 @@ const userSchema = new mongoose.Schema(
     },
     equippedBaseItemId: {
       type: String,
+      default: null
+    },
+    sessionToken: {
+      type: String,
+      default: null,
+      index: true
+    },
+    sessionExpiresAt: {
+      type: Date,
       default: null
     }
   },

@@ -24,6 +24,44 @@ body {
     var(--bg);
 }
 
+.auth-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.auth-panel {
+  width: min(520px, 100%);
+  padding: 32px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+}
+
+.auth-title {
+  margin: 0;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1;
+}
+
+.auth-copy {
+  color: var(--muted);
+  max-width: 42ch;
+}
+
+.auth-toggle,
+.auth-form {
+  display: grid;
+  gap: 12px;
+}
+
+.auth-toggle {
+  grid-template-columns: 1fr 1fr;
+  margin: 20px 0 12px;
+}
+
 .page-shell {
   max-width: 1200px;
   margin: 0 auto;
@@ -262,6 +300,12 @@ button:disabled {
   margin-top: 10px;
   color: var(--accent-strong);
   font-weight: 700;
+}
+
+.profile-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 900px) {

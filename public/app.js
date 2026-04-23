@@ -20,6 +20,13 @@ function setStatus(message = "", type = "info") {
   statusNode.classList.toggle("error", type === "error");
 }
 
+function setAuthStatus(message = "", type = "info") {
+  const statusNode = document.getElementById("authStatusMessage");
+  if (!statusNode) return;
+  statusNode.textContent = message;
+  statusNode.classList.toggle("error", type === "error");
+}
+
 async function api(path, options = {}) {
   const response = await fetch(path, {
     headers: {
@@ -35,7 +42,9 @@ async function api(path, options = {}) {
   const payload = await response.json();
 
   if (!response.ok) {
-    throw new Error(payload.message || "Request failed");
+    const error = new Error(payload.message || "Request failed");
+    error.status = response.status;
+    throw error;
   }
 
   return payload;
@@ -95,7 +104,43 @@ function renderProfile() {
       <span class="chip">${state.habits.length} habits</span>
     </div>
     <div class="message">Complete habits today to earn upgrades.</div>
+    <div class="profile-actions">
+      <button id="logoutButton" class="secondary" type="button">Log Out</button>
+    </div>
   `;
+
+  document.getElementById("logoutButton").addEventListener("click", async () => {
+    await logout();
+  });
+}
+
+function showAuthScreen() {
+  document.getElementById("authShell").hidden = false;
+  document.getElementById("appShell").hidden = true;
+}
+
+function showAppShell() {
+  document.getElementById("authShell").hidden = true;
+  document.getElementById("appShell").hidden = false;
+}
+
+function showLoginMode() {
+  document.getElementById("loginForm").hidden = false;
+  document.getElementById("signupForm").hidden = true;
+}
+
+function showSignupMode() {
+  document.getElementById("loginForm").hidden = true;
+  document.getElementById("signupForm").hidden = false;
+}
+
+function handleUnauthorized(message = "Please log in to continue.") {
+  state.user = null;
+  state.habits = [];
+  state.completedHabitIds = [];
+  state.storeItems = [];
+  setAuthStatus(message, "error");
+  showAuthScreen();
 }
 
 function rerender() {
@@ -211,7 +256,7 @@ function renderStore() {
       button.textContent = "Buy";
       button.disabled = state.user.coins < item.cost;
       button.addEventListener("click", async () => {
-        try {
+      try {
           const payload = await api("/api/store/purchase", {
             method: "POST",
             body: JSON.stringify({ itemId: item.id })
@@ -220,6 +265,7 @@ function renderStore() {
           setStatus(`Purchased "${item.name}".`);
           rerender();
         } catch (error) {
+          if (error.status === 401) return handleUnauthorized("Your session expired. Log in again.");
           setStatus(error.message, "error");
         }
       });
@@ -235,6 +281,7 @@ function renderStore() {
           setStatus(`Equipped "${item.name}".`);
           rerender();
         } catch (error) {
+          if (error.status === 401) return handleUnauthorized("Your session expired. Log in again.");
           setStatus(error.message, "error");
         }
       });
@@ -251,6 +298,7 @@ function renderStore() {
           setStatus(`Unequipped "${item.name}".`); 
           rerender(); 
         } catch (error) { 
+          if (error.status === 401) return handleUnauthorized("Your session expired. Log in again.");
           setStatus(error.message, "error"); 
         } 
       }); 
@@ -266,7 +314,33 @@ async function loadApp() {
   state.habits = payload.habits;
   state.completedHabitIds = payload.completedHabitIds;
   state.storeItems = payload.storeItems;
+  showAppShell();
   rerender();
+}
+
+async function loadSession() {
+  try {
+    const payload = await api("/api/auth/session");
+    state.user = payload.user;
+    await loadApp();
+  } catch (error) {
+    if (error.status === 401) {
+      showAuthScreen();
+      showLoginMode();
+      return;
+    }
+
+    document.body.innerHTML = `<pre style="padding: 20px;">${error.message}</pre>`;
+  }
+}
+
+async function logout() {
+  try {
+    await api("/api/auth/logout", { method: "POST" });
+  } finally {
+    handleUnauthorized();
+    showLoginMode();
+  }
 }
 
 document.getElementById("habitForm").addEventListener("submit", async (event) => {
@@ -290,12 +364,53 @@ document.getElementById("habitForm").addEventListener("submit", async (event) =>
     setStatus(`Added "${habit.title}".`);
     rerender();
   } catch (error) {
+    if (error.status === 401) return handleUnauthorized("Your session expired. Log in again.");
     setStatus(error.message, "error");
   }
 });
 
-loadApp().catch((error) => {
-  document.body.innerHTML = `<pre style="padding: 20px;">${error.message}</pre>`;
+document.getElementById("loginForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
+
+  try {
+    setAuthStatus("");
+    await api("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    event.currentTarget.reset();
+    await loadApp();
+  } catch (error) {
+    setAuthStatus(error.message, "error");
+  }
+});
+
+document.getElementById("signupForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = Object.fromEntries(new FormData(event.currentTarget).entries());
+
+  try {
+    setAuthStatus("");
+    await api("/api/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    event.currentTarget.reset();
+    await loadApp();
+  } catch (error) {
+    setAuthStatus(error.message, "error");
+  }
+});
+
+document.getElementById("showLoginButton").addEventListener("click", () => {
+  setAuthStatus("");
+  showLoginMode();
+});
+
+document.getElementById("showSignupButton").addEventListener("click", () => {
+  setAuthStatus("");
+  showSignupMode();
 });
 
 document.getElementById("resetProgressButton").addEventListener("click", async () => {
@@ -313,6 +428,9 @@ document.getElementById("resetProgressButton").addEventListener("click", async (
     setStatus("Progress reset.");
     rerender();
   } catch (error) {
+    if (error.status === 401) return handleUnauthorized("Your session expired. Log in again.");
     setStatus(error.message, "error");
   }
 });
+
+loadSession();
