@@ -19,6 +19,14 @@ const authRoutes = {
   signup: "/signup"
 };
 
+const completionSound = new Audio("/winsound.m4a");
+completionSound.preload = "auto";
+
+function playCompletionSound() {
+  completionSound.currentTime = 0;
+  completionSound.play().catch(() => {});
+}
+
 function setStatus(message = "", type = "info") {
   const statusNode = document.getElementById("statusMessage");
   if (!statusNode) return;
@@ -231,6 +239,7 @@ function renderHabits() {
         state.user = payload.user;
         state.habits = state.habits.map((entry) => (entry._id === payload.habit._id ? payload.habit : entry));
         state.completedHabitIds = [...state.completedHabitIds, habit._id];
+        playCompletionSound();
         setStatus(`Completed "${habit.title}" and earned ${payload.rewards.coins} coins.`);
         rerender();
       } catch (error) {
