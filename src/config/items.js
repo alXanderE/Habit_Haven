@@ -6,7 +6,7 @@ export const STORE_ITEMS = [
     slot: "accessory",
     cost: 30,
     style: "linear-gradient(135deg, #ef4444, #f97316)",
-    imagePath: "/models/accessories/hat-red.png"
+    imagePath: "/models/accessories/headgear_redhat.png"
   },
   {
     id: "hat-ocean",
@@ -15,7 +15,7 @@ export const STORE_ITEMS = [
     slot: "accessory",
     cost: 60,
     style: "linear-gradient(135deg, #0ea5e9, #2563eb)",
-    imagePath: "/models/accessories/hat-ocean.png"
+    imagePath: "/models/accessories/headgear_oceanhelm.png"
   },
   {
     id: "petal-wall",
