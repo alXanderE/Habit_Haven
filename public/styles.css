@@ -457,6 +457,13 @@ button:disabled {
 
 .avatar-accessory {
   z-index: 6;
+  width: 126%;
+  height: 126%;
+  max-width: none;
+  max-height: none;
+  inset: -16% 0 0 -13%;
+  object-fit: contain;
+  pointer-events: none;
 }
 
 .avatar-item {
