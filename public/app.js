@@ -23,6 +23,7 @@ const habitRewardCoinsByFrequency = {
   daily: 10,
   weekly: 50
 };
+const streakContinuationBonusXp = 5;
 
 const completionSound = new Audio("/winsound.m4a");
 completionSound.preload = "auto";
@@ -63,6 +64,30 @@ function getLevelProgress(xp, level) {
     xpIntoLevel,
     xpNeeded,
     progressPercent
+  };
+}
+
+function getTodayDateString() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getYesterdayDateString() {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() - 1);
+  return date.toISOString().slice(0, 10);
+}
+
+function getHabitDisplayState(habit) {
+  const today = getTodayDateString();
+  const yesterday = getYesterdayDateString();
+  const lastCompletedOn = habit.lastCompletedOn;
+  const streakIsActive = lastCompletedOn === today || lastCompletedOn === yesterday;
+  const displayedStreak = streakIsActive ? habit.streak : 0;
+  const projectedXp = habit.rewardXp + (streakIsActive ? streakContinuationBonusXp : 0);
+
+  return {
+    displayedStreak,
+    projectedXp
   };
 }
 
@@ -268,13 +293,14 @@ function renderHabits() {
 
   for (const habit of state.habits) {
     const node = template.content.cloneNode(true);
+    const habitDisplayState = getHabitDisplayState(habit);
     node.querySelector(".habit-title").textContent = habit.title;
     node.querySelector(".habit-description").textContent = habit.description || "No description";
     node.querySelector(".habit-meta").innerHTML = `
       <span class="chip">${habit.frequency}</span>
-      <span class="chip">${habit.streak} day streak</span>
+      <span class="chip">${habitDisplayState.displayedStreak} day streak</span>
       <span class="chip">${habit.rewardCoins} coins</span>
-      <span class="chip">${habit.rewardXp} XP</span>
+      <span class="chip">${habitDisplayState.projectedXp} XP</span>
     `;
 
     const completed = state.completedHabitIds.includes(habit._id);
