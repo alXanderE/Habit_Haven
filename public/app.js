@@ -19,12 +19,51 @@ const authRoutes = {
   signup: "/signup"
 };
 
+const habitRewardCoinsByFrequency = {
+  daily: 10,
+  weekly: 50
+};
+
 const completionSound = new Audio("/winsound.m4a");
 completionSound.preload = "auto";
 
 function playCompletionSound() {
   completionSound.currentTime = 0;
   completionSound.play().catch(() => {});
+}
+
+function syncRewardCoinsWithFrequency() {
+  const frequencyField = document.getElementById("frequency");
+  const rewardCoinsField = document.getElementById("rewardCoins");
+
+  if (!frequencyField || !rewardCoinsField) {
+    return;
+  }
+
+  const frequency = frequencyField.value === "weekly" ? "weekly" : "daily";
+  rewardCoinsField.value = String(habitRewardCoinsByFrequency[frequency]);
+}
+
+function getXpRequiredForNextLevel(level) {
+  return 50 + 50 * level;
+}
+
+function getLevelProgress(xp, level) {
+  let xpBeforeCurrentLevel = 0;
+
+  for (let currentLevel = 1; currentLevel < level; currentLevel += 1) {
+    xpBeforeCurrentLevel += getXpRequiredForNextLevel(currentLevel);
+  }
+
+  const xpIntoLevel = Math.max(0, xp - xpBeforeCurrentLevel);
+  const xpNeeded = getXpRequiredForNextLevel(level);
+  const progressPercent = Math.min(100, Math.max(0, (xpIntoLevel / xpNeeded) * 100));
+
+  return {
+    xpIntoLevel,
+    xpNeeded,
+    progressPercent
+  };
 }
 
 function setStatus(message = "", type = "info") {
@@ -107,6 +146,8 @@ function renderProfile() {
     return;
   }
 
+  const levelProgress = getLevelProgress(user.xp, user.level);
+
   coinPanel.innerHTML = `
     <p class="eyebrow">Coins</p>
     <h2 class="coin-count">${user.coins}</h2>
@@ -123,6 +164,15 @@ function renderProfile() {
       <span class="chip">Level ${user.level}</span>
       <span class="chip">${user.xp} XP</span>
       <span class="chip">${state.habits.length} habits</span>
+    </div>
+    <div class="xp-progress">
+      <div class="xp-progress-copy">
+        <span>Progress to Level ${user.level + 1}</span>
+        <span>${levelProgress.xpIntoLevel} / ${levelProgress.xpNeeded} XP</span>
+      </div>
+      <div class="xp-progress-track">
+        <div class="xp-progress-fill" style="width: ${levelProgress.progressPercent}%"></div>
+      </div>
     </div>
     <div class="message">Complete habits today to earn upgrades.</div>
     <div class="profile-actions">
@@ -240,7 +290,11 @@ function renderHabits() {
         state.habits = state.habits.map((entry) => (entry._id === payload.habit._id ? payload.habit : entry));
         state.completedHabitIds = [...state.completedHabitIds, habit._id];
         playCompletionSound();
-        setStatus(`Completed "${habit.title}" and earned ${payload.rewards.coins} coins.`);
+        const streakBonusMessage =
+          payload.rewards.bonusXp > 0 ? ` and ${payload.rewards.bonusXp} bonus XP for continuing your streak` : "";
+        setStatus(
+          `Completed "${habit.title}" and earned ${payload.rewards.coins} coins, ${payload.rewards.totalXp} XP${streakBonusMessage}.`
+        );
         rerender();
       } catch (error) {
         setStatus(error.message, "error");
@@ -398,6 +452,7 @@ document.getElementById("habitForm").addEventListener("submit", async (event) =>
   const formData = new FormData(form);
   const payload = Object.fromEntries(formData.entries());
 
+  syncRewardCoinsWithFrequency();
   payload.rewardCoins = Number(payload.rewardCoins);
   payload.rewardXp = Number(payload.rewardXp);
 
@@ -408,7 +463,7 @@ document.getElementById("habitForm").addEventListener("submit", async (event) =>
     });
     state.habits = [habit, ...state.habits];
     form.reset();
-    document.getElementById("rewardCoins").value = "10";
+    syncRewardCoinsWithFrequency();
     document.getElementById("rewardXp").value = "5";
     setStatus(`Added "${habit.title}".`);
     rerender();
@@ -474,6 +529,7 @@ document.getElementById("backToLoginButton").addEventListener("click", () => {
 });
 
 document.getElementById("heroLogoutButton").addEventListener("click", logout);
+document.getElementById("frequency").addEventListener("change", syncRewardCoinsWithFrequency);
 
 document.getElementById("resetProgressButton").addEventListener("click", async () => {
   const confirmed = window.confirm("Reset all habits, coins, XP, and equipped items?");
@@ -504,4 +560,5 @@ window.addEventListener("popstate", () => {
   showAuthRoute(false);
 });
 
+syncRewardCoinsWithFrequency();
 loadSession();

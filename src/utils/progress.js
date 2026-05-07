@@ -1,5 +1,17 @@
 export function calculateLevel(xp) {
-  return Math.floor(xp / 100) + 1;
+  let level = 1;
+  let remainingXp = Math.max(0, xp);
+
+  while (remainingXp >= getXpRequiredForNextLevel(level)) {
+    remainingXp -= getXpRequiredForNextLevel(level);
+    level += 1;
+  }
+
+  return level;
+}
+
+export function getXpRequiredForNextLevel(level) {
+  return 50 + 50 * level;
 }
 
 export function getTodayDateString() {

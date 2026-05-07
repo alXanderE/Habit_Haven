@@ -27,6 +27,11 @@ const modelDir = path.join(__dirname, "models");
 
 export function createApp({ demoUserEmail }) {
   const app = express();
+  const habitRewardCoinsByFrequency = {
+    daily: 10,
+    weekly: 50
+  };
+  const streakContinuationBonusXp = 5;
 
   app.use(morgan("dev"));
   app.use(express.json());
@@ -262,12 +267,15 @@ export function createApp({ demoUserEmail }) {
         return res.status(400).json({ message: "Title is required." });
       }
 
+      const normalizedFrequency = frequency === "weekly" ? "weekly" : "daily";
+      const enforcedRewardCoins = habitRewardCoinsByFrequency[normalizedFrequency];
+
       const habit = await Habit.create({
         userId: user._id,
         title: title.trim(),
         description: description.trim(),
-        frequency,
-        rewardCoins,
+        frequency: normalizedFrequency,
+        rewardCoins: enforcedRewardCoins,
         rewardXp
       });
 
@@ -287,6 +295,22 @@ export function createApp({ demoUserEmail }) {
         if (field in req.body) {
           updates[field] = typeof req.body[field] === "string" ? req.body[field].trim() : req.body[field];
         }
+      }
+
+      if ("frequency" in updates) {
+        updates.frequency = updates.frequency === "weekly" ? "weekly" : "daily";
+      }
+
+      const effectiveFrequency =
+        updates.frequency ||
+        (await Habit.findOne({ _id: habitId, userId: user._id }).select("frequency"))?.frequency;
+
+      if (!effectiveFrequency) {
+        return res.status(404).json({ message: "Habit not found." });
+      }
+
+      if ("frequency" in updates || "rewardCoins" in updates) {
+        updates.rewardCoins = habitRewardCoinsByFrequency[effectiveFrequency];
       }
 
       const habit = await Habit.findOneAndUpdate(
@@ -351,13 +375,15 @@ export function createApp({ demoUserEmail }) {
         completedOn: today
       });
 
-      habit.streak = habit.lastCompletedOn === yesterday ? habit.streak + 1 : 1;
+      const continuedStreak = habit.lastCompletedOn === yesterday;
+      habit.streak = continuedStreak ? habit.streak + 1 : 1;
       habit.lastCompletedOn = today;
       habit.totalCompletions += 1;
       await habit.save();
 
+      const bonusXp = continuedStreak ? streakContinuationBonusXp : 0;
       user.coins += habit.rewardCoins;
-      user.xp += habit.rewardXp;
+      user.xp += habit.rewardXp + bonusXp;
       user.level = calculateLevel(user.xp);
       await user.save();
 
@@ -365,7 +391,9 @@ export function createApp({ demoUserEmail }) {
         message: "Habit completed.",
         rewards: {
           coins: habit.rewardCoins,
-          xp: habit.rewardXp
+          xp: habit.rewardXp,
+          bonusXp,
+          totalXp: habit.rewardXp + bonusXp
         },
         habit,
         user: sanitizeUser(user)
